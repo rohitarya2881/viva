@@ -1,0 +1,152 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh; /* Ensure it works with content overflow */
+    background-color: #f3f4f6;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+
+.container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 90%; /* Default width for responsiveness */
+    max-width: 400px; /* Limit width for larger screens */
+    text-align: center;
+    box-sizing: border-box;
+}
+
+h1 {
+    font-size: 1.8em;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+label {
+    display: block;
+    margin: 10px 0 5px;
+    font-weight: bold;
+    color: #555;
+}
+
+input[type="number"], input[type="file"] {
+    padding: 10px;
+    width: 100%;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    font-size: 1em;
+}
+
+button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 10px;
+    font-size: 1em;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+#options-container {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between buttons */
+}
+
+button#start-recognition {
+    background-color: #2196F3;
+}
+
+button#start-recognition:hover {
+    background-color: #0b7dda;
+}
+
+button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+}
+
+.listening-indicator {
+    display: none;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #ffeb3b;
+    color: #333;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.2em;
+    border-radius: 4px;
+}
+
+.listening-indicator.active {
+    display: block;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 600px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.5em;
+    }
+
+    button {
+        font-size: 0.9em;
+        padding: 10px;
+    }
+
+    .container {
+        padding: 15px;
+    }
+}
+.spinner {
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #3498db;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    margin: 10px auto;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+.progress {
+    background: #ddd;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 20px;
+    height: 8px;
+}
+.progress-bar {
+    height: 100%;
+    background: #4caf50;
+    transition: width 0.3s ease;
+}
+.correct {
+    background-color: #4caf50;
+    color: white;
+}
+.incorrect {
+    background-color: #f44336;
+    color: white;
+}

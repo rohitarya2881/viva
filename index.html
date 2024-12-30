@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz with Start/Stop and Repetition</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
+        .listening-indicator {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: yellow;
+            color: black;
+            font-weight: bold;
+            text-align: center;
+        }
+        .listening-indicator.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>General Knowledge Quiz</h1>
+
+        <!-- Range for review -->
+        <label for="start-question">Start Question Number:</label>
+        <input type="number" id="start-question" value="1" min="1">
+
+        <label for="end-question">End Question Number:</label>
+        <input type="number" id="end-question" value="5" min="1">
+
+        <!-- Repetition -->
+        <label for="repetition-count">Number of Repetitions:</label>
+        <input type="number" id="repetition-count" value="1" min="1">
+
+        <button id="start-review">Start Quiz</button>
+        <button id="stop-review" disabled>Stop Quiz</button>
+
+        <!-- Question and Options -->
+        <p id="question"></p>
+        <div id="options-container"></div>
+
+        <!-- File upload -->
+        <input type="file" id="upload-json" />
+        <p id="file-message"></p>
+        <div class="progress">
+            <div class="progress-bar" style="width: 0%;"></div>
+        </div>
+        
+    </div>
+
+    <script>
+        let questions = [];
+        let currentQuestionIndex = 0;
+        let repetitionCount = 1;
+        let currentRepetition = 1;
+        let quizRunning = false;
+
+        const startButton = document.getElementById('start-review');
+        const stopButton = document.getElementById('stop-review');
+
+        document.getElementById('upload-json').addEventListener('change', handleFileUpload);
+        startButton.addEventListener('click', startReview);
+        stopButton.addEventListener('click', stopReview);
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) {
+                alert("No file selected!");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    questions = JSON.parse(e.target.result);
+                    document.getElementById('file-message').textContent = "Questions loaded successfully!";
+                } catch (error) {
+                    alert("Invalid JSON file. Please upload a valid file.");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function startReview() {
+            if (questions.length === 0) {
+                alert("No questions loaded! Please upload a JSON file.");
+                return;
+            }
+
+            const start = parseInt(document.getElementById('start-question').value) - 1;
+            const end = parseInt(document.getElementById('end-question').value) - 1;
+            repetitionCount = parseInt(document.getElementById('repetition-count').value);
+
+            if (start < 0 || end >= questions.length || start > end) {
+                alert("Invalid question range. Please provide a valid range.");
+                return;
+            }
+
+            currentQuestionIndex = start;
+            currentRepetition = 1;
+            quizRunning = true;
+
+            startButton.disabled = true;
+            stopButton.disabled = false;
+
+            displayNextQuestion();
+        }
+
+        function stopReview() {
+            quizRunning = false;
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            document.getElementById("question").textContent = "Quiz stopped.";
+            document.getElementById("options-container").innerHTML = '';
+        }
+
+        function displayNextQuestion() {
+            if (!quizRunning) return;
+
+            if (currentQuestionIndex <= parseInt(document.getElementById('end-question').value) - 1) {
+                const currentQuestion = questions[currentQuestionIndex];
+                document.getElementById("question").textContent = currentQuestion.question;
+                showOptions(currentQuestion.options);
+
+                setTimeout(() => {
+                    speakQuestionAndOptions(currentQuestion);
+                }, 2000); // Delay before speaking the question
+            } else {
+                handleRepetition();
+            }
+        }
+
+        function showOptions(options) {
+            const optionsContainer = document.getElementById("options-container");
+            optionsContainer.innerHTML = '';
+            options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.textContent = `${index + 1}. ${option}`;
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function speakQuestionAndOptions(currentQuestion) {
+            if (!quizRunning) return;
+
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(
+                    `${currentQuestion.question}. Options are: ` +
+                    currentQuestion.options.map((option, index) => `Option ${index + 1}: ${option}`).join(", ")
+                );
+
+                utterance.onend = () => {
+                    if (quizRunning) {
+                        setTimeout(() => {
+                            speakAnswer(currentQuestion); // Delay of 5 seconds before speaking the answer
+                        }, 5000);
+                    }
+                };
+
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("Speech synthesis not supported in this browser.");
+            }
+        }
+
+        function speakAnswer(currentQuestion) {
+            if (!quizRunning) return;
+
+            if ('speechSynthesis' in window) {
+                const correctAnswer = currentQuestion.answer;
+                const answerUtterance = new SpeechSynthesisUtterance(`The correct answer is: ${correctAnswer}.`);
+                answerUtterance.onend = () => {
+                    if (quizRunning) moveToNextQuestion(); // Move to the next question after speaking the answer
+                };
+                window.speechSynthesis.speak(answerUtterance);
+            }
+        }
+
+        function moveToNextQuestion() {
+            if (!quizRunning) return;
+
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                setTimeout(displayNextQuestion, 2000); // Delay before moving to the next question
+            } else {
+                handleRepetition();
+            }
+        }
+
+        function handleRepetition() {
+            if (!quizRunning) return;
+
+            if (currentRepetition < repetitionCount) {
+                currentRepetition++;
+                currentQuestionIndex = parseInt(document.getElementById('start-question').value) - 1;
+                setTimeout(displayNextQuestion, 2000); // Restart the quiz after a short delay
+            } else {
+                speak("You've completed all repetitions. Well done!");
+                stopReview();
+            }
+        }
+
+        function speak(text) {
+            if (!quizRunning) return;
+
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+    </script>
+</body>
+</html>
